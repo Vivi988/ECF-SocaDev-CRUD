@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="style.css" />
+
+    <title>ECF C3</title>
+  </head>
+  <body>
+    <h2>SocaDev's employees</h2>
+
+    <div id="div_btn">
+      <!-- Button Refresh -->
+      <button type="button" id="rfrsh" onclick="loadinfo()">Refresh</button>
+      <!-- Button for adding a new employee -->
+      <button type="button" id="add_employee">Add a new employee</button><br/>
+    </div>
+    
+    <!-- Table of employees & informations -->
+    <div id="result">
+      <div id="tstinfo"></div>
+      <table>
+        <thead>
+          <td>ID</td>
+          <td>Name</td>
+          <td>Last Name</td>
+          <td>Job Title</td>
+          <td>Email</td>
+          <td>Modifications</td>
+        </thead>
+        <tbody id="info"></tbody>
+      </table>
+    </div>
+
+    <!-- The Modal for modifications -->
+    <div id="myModal" class="modal">
+
+    <!-- Modal content -->
+    <div class="modal-content">
+      <span class="close">&times;</span>
+      <form action="">
+        <legend id="title">Informations</legend><br>
+        <!-- <input type="text" id="mod_id"><br> -->
+        <label for="m_name">Name</label>
+        <input type="text" id="mod_name"><br>
+        <label for="m_last_name">Last Name</label>
+        <input type="text" id="mod_last_name"><br>
+        <label for="m_job_title">Job Title</label>
+        <input type="text" id="mod_job_title"><br>
+        <label for="m_email">Email</label>
+        <input type="text" id="mod_email"><br>
+      </form>
+    </div>
+
+  </body>
+  
+  <script>
+
+    // LOADING DIRECTLY ALL INFORMATIONS 
+    document.addEventListener("DOMContentLoaded", function () {
+      loadinfo();
+    });
+
+    // GETTING EMMPLOYEES + BTN REFRESH
+    function loadinfo() {
+
+      // GET REQUEST COLLECTING DATAS FROM THE API
+      const xhttp = new XMLHttpRequest();
+      xhttp.open(
+        "GET",
+        "https://6057e432c3f49200173ad08d.mockapi.io/api/v1/employees",
+        true
+      );
+      // VERIFYING STATE
+      xhttp.onreadystatechange = function () {
+        if (xhttp.readyState === 4) {
+          var src = this.responseText;
+          var emp_list = JSON.parse(src);
+          var info = document.getElementById("info");
+
+          // For each employee in the data, this is how informations are gonna be ordered in the table
+          emp_list.forEach((employee) => {
+            info.innerHTML +=
+              "<tr id =" + employee["id"] + ">" + 
+              "<td>" + employee.id + "</td>" + 
+              "<td>" + employee.name + "</td>" + 
+              "<td>" + employee.last_name + "</td>" + 
+              "<td>" + employee.job_title + "</td>" +
+              "<td>" + employee.email + "</td>" +
+              "<td>" + "<button type='button' onclick='modif_employee(" + employee["id"] + ")' id ='modif-employee'> Modify </button>" + 
+              "<button type='button' onclick='delete_employee(" + employee["id"] + ")' id = 'del_employee' '> Delete </button>"
+              "</td>" +
+              "</tr>";
+          });
+        }
+      };
+      xhttp.send();
+    }
+  
+    // ADDING NEW EMPLOYEE
+    function new_employee() {
+
+      let add_name = document.getElementById("mod_name").value;
+      let add_last_name = document.getElementById("mod_last_name").value;
+      let add_job_title = document.getElementById("mod_job_title").value;
+      let add_email = document.getElementById("mod_email").value;
+      
+      // POST REQUEST IN ORDER TO SEND NEW INFORMATIONS FOR A NEW EMPLOYEE
+      const xhttp = new XMLHttpRequest();
+      xhttp.open(
+        "POST",
+        "https://6057e432c3f49200173ad08d.mockapi.io/api/v1/employees",
+        true
+      );
+      xhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+
+      // VERIFYING STATE
+      xhttp.onreadystatechange = function () {
+
+        // Making sure request is available
+        if (this.readyState == 4 && this.status == 201) {
+
+          // alert for confirming the adding
+          alert("Employee is in your list");
+
+          // close the modal
+          modal.style.display = "none";
+
+          // Refresh
+          loadinfo();
+        } else {
+          // In case your adding don't go well
+          if (this.readyState == 4 && this.status != 201) {
+            // message 
+            alert("Your add didn't succed please, wait and try again later")
+          }
+        }
+      };
+      
+      // Sending informations to API
+      xhttp.send(
+        "name=" + add_name + "&last_name=" +
+          add_last_name + "&job_title=" + add_job_title +
+          "&email=" + add_email
+      );
+    };
+
+
+     // OPENING EDITING MODAL
+     function modif_employee(event) {
+      var id = event;
+      console.log(id);
+
+      // GET REQUEST TO GET INFORMATIONS ABOUT EMPLOYEE SELECTED
+      const xhttp = new XMLHttpRequest();
+      xhttp.open(
+        "GET",
+        "https://6057e432c3f49200173ad08d.mockapi.io/employees/" + id ,
+        true
+      );
+
+      // SHOW MODAL
+      modal.style.display = "block";
+      
+      // VERIFYING STATE
+      xhttp.onreadystatechange = function () {
+        if (xhttp.readyState === 4) {
+
+          // GETTING DATAS AND PARSING THEM
+          var src = this.responseText;
+          var emp_info = JSON.parse(src);
+
+          // console.log(emp_info.name);
+
+          document.getElementById("mod_name").value = emp_info.name ;
+          document.getElementById("mod_last_name").value = emp_info.last_name;
+          document.getElementById("mod_job_title").value = emp_info.job_title;
+          document.getElementById("mod_email").value = emp_info.email;
+
+          // Modify the title of the modal
+          let title = document.getElementById("title");
+          title.innerText = "Modify informations";
+
+          let addButton = document.getElementById("addButton");
+            if (addButton != null) {
+            addButton.remove();
+          };
+
+          let confirmButton = document.getElementById("confirmButton");
+          if (confirmButton != null) {
+              confirmButton.remove();
+          };
+
+          const confirmButtonContainer = document.createElement("div");
+          confirmButtonContainer.className ="row p-2"
+        
+          confirmButton = document.createElement("button");
+          confirmButton.setAttribute("type", "button");
+          confirmButton.innerText = "Confirm";
+          confirmButton.title = "confirm deleting";
+          confirmButton.id = "confirmButton";
+          confirmButton.className = "confirm_btn";
+          confirmButton.addEventListener("click", () => {
+              update_employee(id);
+              loadinfo();
+          });
+
+          confirmButtonContainer.append(confirmButton);
+          modalContent.append(confirmButtonContainer);
+          };
+        };
+        xhttp.send();
+    };
+
+    // UPDATING INFORMATIONS OF EMPLOYEE
+    function update_employee(event) {
+    console.log(event);
+    var id = event;
+
+      let edit_name = document.getElementById("mod_name").value;
+      let edit_last_name = document.getElementById("mod_last_name").value;
+      let edit_job_title = document.getElementById("mod_job_title").value;
+      let edit_email = document.getElementById("mod_email").value;
+
+      // PUT REQUEST FOR UPDATE 
+      const xhttp = new XMLHttpRequest();
+      xhttp.open(
+        "PUT", 
+        "https://6057e432c3f49200173ad08d.mockapi.io/employees/" + id, 
+        true
+        );
+      xhttp.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+
+      // VERIFYING STATE
+      xhttp.onreadystatechange = function () {
+        if (this.readyState == 4) {
+          alert("Employee N°" + id + " has been successfully updated ");
+          loadinfo();
+          modal.style.display = "none";
+        }
+      };
+
+      // SENDING UPDATED DATA
+      xhttp.send(
+        "name=" + edit_name + "&last_name=" +
+          edit_last_name + "&job_title=" + edit_job_title +
+            "&email=" + edit_email
+      );
+
+      // console.log(edit_name);
+    };
+
+
+    // OPENING DELETE MODAL
+    function delete_employee(event) {
+      var id = event;
+      console.log(id);
+
+      const xhttp = new XMLHttpRequest();
+      xhttp.open(
+        "GET",
+        "https://6057e432c3f49200173ad08d.mockapi.io/employees/" + id ,
+        true
+      );
+
+      // SHOW MODAL
+      modal.style.display = "block";
+      
+      // VERIFYING STATE
+      xhttp.onreadystatechange = function () {
+        if (xhttp.readyState === 4) {
+
+          var src = this.responseText;
+          var emp_info = JSON.parse(src);
+          
+          console.log(emp_info.name);
+
+          document.getElementById("mod_name").value = emp_info.name ;
+          document.getElementById("mod_last_name").value = emp_info.last_name;
+          document.getElementById("mod_job_title").value = emp_info.job_title;
+          document.getElementById("mod_email").value = emp_info.email;
+
+          // Modify the title of the modal
+          let title = document.getElementById("title");
+          title.innerText = "Do you wanna delete this employee ?";
+
+          // No repetition of making "add" btn while refreshing the site
+          let addButton = document.getElementById("addButton");
+            if (addButton != null) {
+            addButton.remove();
+          };
+
+          // No repetition of making "confirm" btn while refreshing the site
+          let confirmButton = document.getElementById("confirmButton");
+          if (confirmButton != null) {
+              confirmButton.remove();
+          };
+
+          const confirmButtonContainer = document.createElement("div");
+          confirmButtonContainer.className ="row p-2"
+          
+          // Create an "confirm" btn inside modal
+          confirmButton = document.createElement("button");
+          confirmButton.setAttribute("type", "button");
+          confirmButton.innerText = "Yes";
+          confirmButton.title = "confirm deleting";
+          confirmButton.id = "confirmButton";
+          confirmButton.className = "confirm_btn";
+          confirmButton.addEventListener("click", () => {
+              del_employee(id);
+              loadinfo(); 
+          });
+
+          confirmButtonContainer.append(confirmButton);
+          modalContent.append(confirmButtonContainer);
+          };
+        };
+        xhttp.send();
+    };
+
+    // DELETING EMPLOYEE
+    function del_employee(event) {
+    console.log(event);
+    var id = event;
+      const xhttp = new XMLHttpRequest();
+      xhttp.open(
+        "DELETE", 
+        "https://6057e432c3f49200173ad08d.mockapi.io/employees/" + id, 
+        true
+        );
+      xhttp.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+      
+      // VERIFYING STATE
+      xhttp.onreadystatechange = function () {
+        if (this.readyState == 4) {
+          alert("Employee N°" + id + " has been successfully deleted ");
+          loadinfo();
+          modal.style.display = "none";
+        }
+      };
+      xhttp.send();
+    };
+
+    // get the modal
+    let modal = document.getElementById("myModal");
+    
+    // get the btn for oppening the modal when clicking on btn "add an employee"
+    let addEmployeeBtn = document.getElementById("add_employee");
+
+    // get the btn for oppening the modal when clicking on btn "delete"
+    let deleteEmployeeBtn = document.getElementById("delete_employee");
+
+    // "x" item for closing modal
+    let closeModalBtn = document.getElementsByClassName("close")[0];
+    
+    // get content of modal
+    let modalContent = document.getElementsByClassName("modal-content")[0];
+    
+    // when you click on the "x" it closes the modal
+    closeModalBtn.onclick = function () {
+      modal.style.display = "none";
+    };
+    
+    // when you click outside the modal it closes 
+    window.onclick = function (event) {
+      if (event.target == modal) {
+        modal.style.display = "none";
+      }
+    };
+    
+    // Showing modal with informations
+    addEmployeeBtn.addEventListener("click", () => {
+    
+      // Inputs empty
+      document.getElementById("mod_name").value = "";
+      document.getElementById("mod_last_name").value = "";
+      document.getElementById("mod_job_title").value = "";
+      document.getElementById("mod_email").value = "";
+    
+      // Modify the title
+      let title = document.getElementById("title");
+      title.innerText = "Informations for the new employee";
+    
+      // No repetition of making "add" btn while refreshing the site
+      let addButton = document.getElementById("addButton");
+      if (addButton != null) {
+        addButton.remove();
+      };
+      
+      // No repetition of making "validate" btn while refreshing the siteconfirmvalidateButton = document.getElementById("validateButton");
+      let confirmButton = document.getElementById("confirmButton");
+      if (confirmButton != null) {
+        confirmButton.remove();
+      };
+    
+      // Create an "add" btn inside modal
+      const addButtonContainer = document.createElement("div");
+      addButtonContainer.className ="btn_add"
+    
+      addButton = document.createElement("button");
+      addButton.setAttribute("type", "button");
+      addButton.title = "Add an employee";
+      addButton.innerText = "Add";
+      addButton.id = "addButton";
+      addButton.className = "btn btn-primary fs-4";
+      addButton.addEventListener("click", () => {
+        new_employee();
+      });
+    
+      addButtonContainer.append(addButton);
+      modalContent.append(addButtonContainer);
+      
+      // show modal
+      modal.style.display = "block";
+    });
+    
+  </script>
+</html>
