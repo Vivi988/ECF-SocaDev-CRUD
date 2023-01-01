@@ -78,7 +78,9 @@
         if (xhttp.readyState === 4) {
           var src = this.responseText;
           var emp_list = JSON.parse(src);
-          var info = document.getElementById("info");
+          // console.log(emp_list);
+          
+          // var info = document.getElementById("info");
 
           // For each employee in the data, this is how informations are gonna be ordered in the table
           emp_list.forEach((employee) => {
@@ -204,7 +206,8 @@
           confirmButton.className = "confirm_btn";
           confirmButton.addEventListener("click", () => {
               update_employee(id);
-              loadinfo();
+              // refresh page after modifications
+              document.location.reload();
           });
 
           confirmButtonContainer.append(confirmButton);
@@ -310,7 +313,8 @@
           confirmButton.className = "confirm_btn";
           confirmButton.addEventListener("click", () => {
               del_employee(id);
-              loadinfo(); 
+              // loadinfo(); 
+              document.location.reload();
           });
 
           confirmButtonContainer.append(confirmButton);
@@ -407,6 +411,8 @@
       addButton.className = "btn btn-primary fs-4";
       addButton.addEventListener("click", () => {
         new_employee();
+        // refresh page after modifications
+        document.location.reload();
       });
     
       addButtonContainer.append(addButton);
